@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: rag-chatbot-platform
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: ADMIN_LOGIN_ID
+        sync: false
+      - key: MASTER_ENCRYPTION_KEY
+        sync: false
+      - key: DEMO_SITE_KEY
+        sync: false
+      - key: DEMO_ADMIN_TOKEN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
