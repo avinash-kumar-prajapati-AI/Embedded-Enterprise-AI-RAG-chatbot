@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1784518872376,
+      "tag": "0000_free_eddie_brock",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784523512794,
+      "tag": "0001_old_blindfold",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784530208877,
+      "tag": "0002_outstanding_wrecking_crew",
+      "breakpoints": true
+    }
+  ]
+}

@@ -20,6 +20,9 @@
 # production
 /build
 
+# local stub blob storage (Phase 3) — swap for real S3/R2 before deploy
+/.data
+
 # misc
 .DS_Store
 *.pem
@@ -32,6 +35,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +43,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+AGENTS.md
+CLAUDE.md
+implementation-plan.md
+93c590f537619b0c2dca43d7465a70ca.pdf
