@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { apiKeys } from "@/lib/db/schema";
 import { generateCompletion, ProviderCallError } from "@/lib/providers";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function POST(
   _request: Request,

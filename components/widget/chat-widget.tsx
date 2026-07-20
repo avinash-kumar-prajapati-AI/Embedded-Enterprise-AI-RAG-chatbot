@@ -13,7 +13,7 @@ interface Turn {
   sources?: { documentId: string; filename: string; docType: string; score: number }[];
 }
 
-export function ChatWidget() {
+export function ChatWidget({ siteKey }: { siteKey: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
@@ -35,10 +35,10 @@ export function ChatWidget() {
     setIsSending(true);
 
     try {
-      const response = await fetch("/api/demo/query", {
+      const response = await fetch("/api/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, history }),
+        body: JSON.stringify({ siteKey, query, history }),
       });
 
       const rawBody = await response.text();

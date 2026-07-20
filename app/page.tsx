@@ -134,7 +134,7 @@ export default async function Home() {
         Built as a solo portfolio project — Next.js, Postgres/pgvector, Redis.
       </footer>
 
-      <ChatWidget />
+      <ChatWidget siteKey={demoTenant.siteKey} />
     </div>
   );
 }
