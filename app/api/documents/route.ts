@@ -21,6 +21,18 @@ function parsePageNumber(value: FormDataEntryValue | null): number | null {
 }
 
 export async function POST(request: Request) {
+  try {
+    return await handlePost(request);
+  } catch (error) {
+    console.error("/api/documents crashed", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+async function handlePost(request: Request): Promise<Response> {
   const formData = await request.formData();
   const adminToken = formData.get("adminToken");
 

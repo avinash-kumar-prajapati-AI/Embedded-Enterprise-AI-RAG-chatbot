@@ -37,16 +37,30 @@ export function ChatTest({ siteKey }: { siteKey: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ siteKey, query, history }),
       });
-      const data = await response.json();
+
+      const rawBody = await response.text();
+      let data: Record<string, unknown>;
+      try {
+        data = JSON.parse(rawBody);
+      } catch {
+        throw new Error(`Server returned a non-JSON response (status ${response.status}): ${rawBody.slice(0, 200)}`);
+      }
 
       setTurns((prev) => [
         ...prev,
-        { role: "assistant", content: data.message ?? data.error ?? "No response", sources: data.sources },
+        {
+          role: "assistant",
+          content: (data.message as string) ?? (data.error as string) ?? "No response",
+          sources: data.sources as Turn["sources"],
+        },
       ]);
-    } catch {
+    } catch (error) {
       setTurns((prev) => [
         ...prev,
-        { role: "assistant", content: "Request failed — check your connection." },
+        {
+          role: "assistant",
+          content: error instanceof Error ? `Request failed: ${error.message}` : "Request failed — check your connection.",
+        },
       ]);
     } finally {
       setIsSending(false);

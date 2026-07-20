@@ -1,7 +1,26 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-const redis = Redis.fromEnv();
+import { resolveEnv } from "@/lib/env";
+
+// UPSTASH_REDIS_REST_URL/TOKEN are canonical; the rest cover Vercel's
+// various Redis-integration naming (KV_* from "Vercel KV", RAG_KV_* if a
+// project-specific prefix was used, etc.) so a manually-copied duplicate
+// isn't needed.
+const redis = new Redis({
+  url: resolveEnv(
+    "UPSTASH_REDIS_REST_URL",
+    "RAG_UPSTASH_REDIS_REST_URL",
+    "KV_REST_API_URL",
+    "RAG_KV_REST_API_URL"
+  )!,
+  token: resolveEnv(
+    "UPSTASH_REDIS_REST_TOKEN",
+    "RAG_UPSTASH_REDIS_REST_TOKEN",
+    "KV_REST_API_TOKEN",
+    "RAG_KV_REST_API_TOKEN"
+  )!,
+});
 
 // Defensive, tenant-agnostic cap per IP — protects the public /api/query
 // endpoint from a single abusive client regardless of which tenant's
