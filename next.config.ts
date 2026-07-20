@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
     "@huggingface/transformers",
     "onnxruntime-node",
   ],
+  // onnxruntime-node's native .node/.so binaries are required dynamically
+  // (a constructed path per-platform), which Vercel's deployment file
+  // tracer doesn't follow — without this, the file genuinely isn't
+  // uploaded and loading it at runtime fails with "libonnxruntime.so.1:
+  // cannot open shared object file".
+  outputFileTracingIncludes: {
+    "/**/*": ["./node_modules/onnxruntime-node/bin/**/*"],
+  },
 };
 
 export default nextConfig;
