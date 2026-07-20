@@ -6,8 +6,6 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
-      - key: NODE_ENV
-        value: production
       - key: DATABASE_URL
         sync: false
       - key: UPSTASH_REDIS_REST_URL
@@ -26,5 +24,4 @@ services:
         sync: false
       - key: DEMO_ADMIN_TOKEN
         sync: false
-      - key: OPENAI_API_KEY
-        sync: false
+
