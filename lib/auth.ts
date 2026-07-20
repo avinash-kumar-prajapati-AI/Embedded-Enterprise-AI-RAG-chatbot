@@ -1,37 +1,42 @@
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq } from "drizzle-orm";
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
 import { authConfig } from "@/lib/auth.config";
 import { db } from "@/lib/db";
-import { accounts, sessions, users, verificationTokens } from "@/lib/db/schema";
-import { provisionTenantForUser } from "@/lib/tenant";
+import { users } from "@/lib/db/schema";
+import { getOrCreateDemoTenant } from "@/lib/demo";
 
-// Dev-only "sign in with a username, no password" provider — lets you
-// exercise the dashboard without setting up Google OAuth. Deliberately
-// excluded outside development: it authenticates anyone who types an
-// existing username, no secret required.
-const devUsernameProvider = Credentials({
+// The only way into the dashboard: a single long secret (ADMIN_LOGIN_ID)
+// known only to the site owner. There is no public signup — this app has
+// exactly one tenant (the same one the public homepage demo uses), managed
+// by its one admin.
+const adminIdProvider = Credentials({
   id: "credentials",
-  name: "Username (dev only)",
+  name: "Admin ID",
   credentials: {
-    username: { label: "Username", type: "text" },
+    adminId: { label: "Admin ID", type: "password" },
   },
   async authorize(credentials) {
-    const raw = typeof credentials?.username === "string" ? credentials.username : "";
-    const username = raw.trim().toLowerCase();
-    if (!username) return null;
+    const adminId = typeof credentials?.adminId === "string" ? credentials.adminId : "";
+    const expected = process.env.ADMIN_LOGIN_ID;
+    if (!expected || !adminId || adminId !== expected) return null;
 
-    const email = `${username}@local.dev`;
+    const demoTenant = await getOrCreateDemoTenant();
+    const email = "admin@internal";
+
     let [user] = await db.select().from(users).where(eq(users.email, email));
-
     if (!user) {
       [user] = await db
         .insert(users)
-        .values({ email, name: username })
+        .values({ email, name: "Admin", tenantId: demoTenant.id, role: "owner" })
         .returning();
-      await provisionTenantForUser(user.id, username);
+    } else if (user.tenantId !== demoTenant.id) {
+      [user] = await db
+        .update(users)
+        .set({ tenantId: demoTenant.id, role: "owner" })
+        .where(eq(users.id, user.id))
+        .returning();
     }
 
     return { id: user.id, name: user.name, email: user.email };
@@ -40,29 +45,10 @@ const devUsernameProvider = Credentials({
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  providers: [
-    ...authConfig.providers,
-    ...(process.env.NODE_ENV !== "production" ? [devUsernameProvider] : []),
-  ],
-  adapter: DrizzleAdapter(db, {
-    usersTable: users,
-    accountsTable: accounts,
-    sessionsTable: sessions,
-    verificationTokensTable: verificationTokens,
-  }),
+  providers: [adminIdProvider],
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
   trustHost: true,
-  events: {
-    // A brand-new OAuth user has no tenant yet — provision one and make
-    // them its owner. Runs once, right after the adapter inserts the user
-    // row. (The dev username provider does this itself in authorize()
-    // since it bypasses the adapter's createUser entirely.)
-    async createUser({ user }) {
-      if (!user.id) return;
-      await provisionTenantForUser(user.id, user.email?.split("@")[0] ?? "New workspace");
-    },
-  },
   callbacks: {
     ...authConfig.callbacks,
     async jwt({ token, user }) {

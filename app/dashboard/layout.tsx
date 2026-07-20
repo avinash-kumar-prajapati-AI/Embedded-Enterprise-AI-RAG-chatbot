@@ -21,6 +21,9 @@ export default function DashboardLayout({
           <Link href="/dashboard/chat-test" className="hover:underline">
             Chat test
           </Link>
+          <Link href="/" target="_blank" className="ml-auto hover:underline">
+            View homepage ↗
+          </Link>
         </div>
       </nav>
       {children}
