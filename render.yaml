@@ -3,7 +3,11 @@ services:
     name: rag-chatbot-platform
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build
+    # Render sets NODE_ENV=production for Node services, which makes plain
+    # `npm install` skip devDependencies (tailwindcss, @tailwindcss/postcss,
+    # typescript, eslint...) — all of which `next build` actually needs.
+    # --include=dev forces them in regardless of NODE_ENV.
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     envVars:
       - key: DATABASE_URL

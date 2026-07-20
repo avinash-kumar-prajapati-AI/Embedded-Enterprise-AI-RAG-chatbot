@@ -25,18 +25,34 @@ function getPipeline(): Promise<FeatureExtractionPipeline> {
       // outside of os.tmpdir() — the library's default cache location can
       // fail to write there. /tmp is always writable, on every platform.
       env.cacheDir = tmpdir();
-      return pipeline("feature-extraction", MODEL_ID);
+      // int8-quantized weights — a fraction of fp32's memory/download size,
+      // with only a small, usually-negligible accuracy cost for retrieval.
+      // Matters a lot on memory-constrained hosts (e.g. Render free tier's
+      // 512MB), where the fp32 model alone could push past the limit.
+      return pipeline("feature-extraction", MODEL_ID, { dtype: "q8" });
     });
   }
   return pipelinePromise;
 }
 
+// Embedding N texts in one call builds one tensor batch sized for all N at
+// once — for a large PDF (dozens of chunks) that's a real memory spike on
+// top of the model's own footprint. Processing in small batches trades a
+// little latency for a much lower peak, which matters on constrained hosts
+// (e.g. Render free tier's 512MB).
+const BATCH_SIZE = 8;
+
 async function embed(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
 
   const extractor = await getPipeline();
-  const output = await extractor(texts, { pooling: "mean", normalize: true });
-  const vectors = output.tolist() as number[][];
+  const vectors: number[][] = [];
+
+  for (let i = 0; i < texts.length; i += BATCH_SIZE) {
+    const batch = texts.slice(i, i + BATCH_SIZE);
+    const output = await extractor(batch, { pooling: "mean", normalize: true });
+    vectors.push(...(output.tolist() as number[][]));
+  }
 
   for (const vector of vectors) {
     if (vector.length !== EMBEDDING_DIMENSIONS) {
